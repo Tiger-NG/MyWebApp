@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>前滴后低温浸泡法</title>
+    <!-- 引入 Tailwind CSS 进行快速样式构建 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 自定义字体和动画 */
+        :root {
+            --brand-brown: #8B5A2B;
+            --brand-dark: #3E2723;
+            --brand-bg: #FDFBF7;
+            --brand-card: #FFFFFF;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--brand-bg);
+            color: var(--brand-dark);
+            -webkit-tap-highlight-color: transparent;
+            /* 适配 iPhone 底部安全区 */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* 隐藏滚动条但保留滚动功能，让界面更像 App */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        @keyframes steam {
+            0% {
+                transform: translateY(0) scaleX(1);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translateY(-30px) scaleX(1.5);
+                opacity: 0;
+            }
+        }
+
+        .steam-line {
+            position: absolute;
+            width: 3px;
+            height: 10px;
+            background: #C4A484;
+            border-radius: 4px;
+            animation: steam 2s infinite ease-out;
+        }
+
+        .steam-1 {
+            left: 35%;
+            animation-delay: 0s;
+        }
+
+        .steam-2 {
+            left: 50%;
+            animation-delay: 0.6s;
+        }
+
+        .steam-3 {
+            left: 65%;
+            animation-delay: 1.2s;
+        }
+
+        /* 模态框动画 */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .progress-bar-transition {
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-[#D4C4B7]">
+
+    <!-- 主容器，限制最大宽度以在桌面端也能保持手机比例 -->
+    <main class="max-w-md mx-auto min-h-screen relative pb-32">
+
+        <!-- 顶部标题区 -->
+        <header class="pt-12 pb-6 px-6 text-center">
+            <h1 class="text-2xl font-bold text-[#3E2723] flex items-center justify-center gap-2 mb-1">
+                <i data-lucide="coffee" class="text-[#8B5A2B] w-6 h-6"></i>
+                前滴后低温浸泡法
+            </h1>
+            <p class="text-[#8C7A6B] text-xs tracking-widest uppercase">Signature Recipe</p>
+        </header>
+
+        <!-- 冲煮参数 (2x2 网格，适合手机横向空间) -->
+        <section class="px-5 mb-8">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-[#F0EBE1]">
+                    <div class="text-[#8C7A6B] text-xs mb-1 flex items-center gap-1">
+                        <i data-lucide="scale" class="w-3 h-3"></i> 咖啡豆
+                    </div>
+                    <div class="font-semibold text-[#3E2723]">20g</div>
+                </div>
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-[#F0EBE1]">
+                    <div class="text-[#8C7A6B] text-xs mb-1 flex items-center gap-1">
+                        <i data-lucide="droplets" class="w-3 h-3"></i> 总注水量
+                    </div>
+                    <div class="font-semibold text-[#3E2723]">280g</div>
+                </div>
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-[#F0EBE1]">
+                    <div class="text-[#8C7A6B] text-xs mb-1 flex items-center gap-1">
+                        <i data-lucide="thermometer" class="w-3 h-3"></i> 阶段水温
+                    </div>
+                    <div class="text-sm font-semibold text-[#3E2723]">
+                        <span class="text-[#D35400]">90°C</span> / <span class="text-[#2980B9]">70°C</span>
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-[#F0EBE1]">
+                    <div class="text-[#8C7A6B] text-xs mb-1 flex items-center gap-1">
+                        <i data-lucide="filter" class="w-3 h-3"></i> 滤杯
+                    </div>
+                    <div class="text-sm font-semibold text-[#8B5A2B]">V60 聪明杯</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主计时器区域 -->
+        <section class="px-5 mb-8">
+            <div
+                class="bg-white rounded-[2rem] p-8 shadow-lg shadow-[#E8E0D5]/50 border border-[#F0EBE1] flex flex-col items-center relative overflow-hidden">
+                <!-- 底部总进度条 -->
+                <div class="absolute left-0 bottom-0 h-1.5 bg-[#8B5A2B] progress-bar-transition" id="totalProgressBar"
+                    style="width: 0%;"></div>
+
+                <div id="mainTimeDisplay" class="text-7xl font-light tracking-tighter text-[#3E2723] mb-1 tabular-nums">
+                    0:00
+                </div>
+                <div class="text-[#8C7A6B] text-xs uppercase tracking-widest">
+                    / 3:00 总时长
+                </div>
+            </div>
+        </section>
+
+        <!-- 当前步骤卡片 -->
+        <section class="px-5 mb-8">
+            <h3 class="text-[#8C7A6B] text-xs tracking-wider mb-2 ml-1">当前步骤</h3>
+            <div class="bg-[#FAF6F0] border-l-4 border-[#8B5A2B] p-4 rounded-r-2xl relative overflow-hidden shadow-sm">
+                <!-- 步骤进度条 -->
+                <div id="stepProgressBar" class="absolute top-0 left-0 h-full bg-[#8B5A2B]/10 progress-bar-transition"
+                    style="width: 0%;"></div>
+
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 id="stepTitle" class="text-lg font-bold text-[#3E2723]">第一段注水 (前滴)</h4>
+                        <span id="stepActionBadge"
+                            class="flex items-center gap-1 text-[#8B5A2B] bg-white px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm">
+                            <i data-lucide="droplet" class="w-3 h-3"></i>
+                            <span id="stepActionText">注入 60g</span>
+                        </span>
+                    </div>
+                    <p id="stepDesc" class="text-[#6B5A4E] text-sm mb-3 leading-relaxed">确保阀门开启，从中心向外绕圈注水，让咖啡粉充分润湿。</p>
+
+                    <div class="flex items-center justify-between text-xs text-[#8C7A6B] bg-white/60 p-2 rounded-lg">
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="thermometer" class="w-3 h-3"></i> 建议水温: <span id="stepTemp"
+                                class="font-bold text-[#3E2723]">90°C</span>
+                        </div>
+                        <div>
+                            倒计时: <span id="stepTimeLeft" class="font-mono font-bold text-[#8B5A2B] text-sm">0:30</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 流程时间线 -->
+        <section class="px-5 mb-8">
+            <h3 class="text-[#8C7A6B] text-xs tracking-wider mb-4 ml-1">流程概览</h3>
+            <div class="relative border-l-2 border-[#E8E0D5] ml-2 space-y-5 pb-4" id="timelineContainer">
+                <!-- 时间线项目将由 JS 动态生成 -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部悬浮控制栏 (适配 iPhone) -->
+    <div
+        class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-[#F0EBE1] pb-[env(safe-area-inset-bottom)]">
+        <div class="max-w-md mx-auto px-5 py-4 flex gap-4 items-center justify-center">
+            <button id="resetBtn"
+                class="w-12 h-12 flex items-center justify-center rounded-full border-2 border-[#E8E0D5] text-[#8C7A6B] active:bg-[#FDFBF7] active:scale-95 transition-all">
+                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+            </button>
+            <button id="playPauseBtn"
+                class="flex-1 flex items-center justify-center gap-2 h-14 rounded-full font-bold text-lg text-white bg-[#8B5A2B] active:bg-[#6F4822] active:scale-95 transition-all shadow-lg shadow-[#8B5A2B]/30">
+                <i data-lucide="play" class="w-6 h-6 fill-current" id="playIcon"></i>
+                <i data-lucide="pause" class="w-6 h-6 hidden" id="pauseIcon"></i>
+                <span id="playPauseText">开始冲煮</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 冲煮完成弹窗 -->
+    <div id="finishModal"
+        class="fixed inset-0 bg-[#3E2723]/60 backdrop-blur-sm z-50 flex items-center justify-center p-5 hidden">
+        <div
+            class="bg-[#FDFBF7] rounded-[2rem] p-8 max-w-sm w-full text-center relative overflow-hidden modal-enter shadow-2xl">
+            <!-- 装饰背景 -->
+            <div
+                class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#FAF6F0] rounded-full blur-2xl">
+            </div>
+
+            <div class="relative mb-6 mt-2 flex justify-center">
+                <div class="relative">
+                    <div class="steam-line steam-1 -top-6"></div>
+                    <div class="steam-line steam-2 -top-8"></div>
+                    <div class="steam-line steam-3 -top-6"></div>
+                    <div class="bg-[#8B5A2B] p-5 rounded-full shadow-lg shadow-[#8B5A2B]/30 text-white relative z-10">
+                        <i data-lucide="coffee" class="w-10 h-10"></i>
+                    </div>
+                    <div
+                        class="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border-4 border-[#FDFBF7] z-20">
+                        <i data-lucide="check" class="w-4 h-4 text-white font-bold"></i>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-[#3E2723] mb-2 relative z-10">可以品尝啦！</h2>
+            <p class="text-[#6B5A4E] text-sm mb-6 leading-relaxed relative z-10">
+                3分钟冲煮时间已到。<br />
+                如果咖啡液尚未完全滴完，请直接移开滤杯。<br />
+                <span
+                    class="inline-block mt-3 bg-[#FAF6F0] p-2.5 rounded-xl text-[#8C7A6B] text-xs text-left w-full border border-[#F0EBE1]">
+                    💡 提示：若觉得浓度偏高，可适量加入热水稀释至您喜欢的口感。
+                </span>
+            </p>
+
+            <button id="closeModalBtn"
+                class="w-full bg-[#3E2723] text-[#FDFBF7] font-bold py-4 rounded-xl active:bg-[#5A3B2E] transition-colors relative z-10 text-lg">
+                准备下一壶
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // --- 数据定义 ---
+        const TOTAL_TIME = 180; // 180秒 = 3分钟
+        const steps = [
+            {
+                id: 1,
+                start: 0,
+                end: 30,
+                title: "第一段注水 (前滴)",
+                action: "注入 60g",
+                temp: "90°C",
+                desc: "确保阀门开启，从中心向外绕圈注水，让咖啡粉充分润湿。"
+            },
+            {
+                id: 2,
+                start: 30,
+                end: 75,
+                title: "第二段注水",
+                action: "至 120g",
+                temp: "90°C",
+                desc: "总水量达到 120g。继续保持阀门开启，让咖啡液滴落。"
+            },
+            {
+                id: 3,
+                start: 75,
+                end: 105,
+                title: "低温浸泡",
+                action: "关阀注水",
+                temp: "70°C",
+                desc: "关闭聪明杯阀门，换用 70°C 低温水柔和注入至280g，开始浸泡。"
+            },
+            {
+                id: 4,
+                start: 105,
+                end: 180,
+                title: "开阀萃取",
+                action: "等待滴落",
+                temp: "自然降温",
+                desc: "打开阀门让咖啡液流出。若到3分钟未滴完请移开滤杯。"
+            }
+        ];
+
+        // --- 状态变量 ---
+        let time = 0;
+        let isRunning = false;
+        let timerInterval = null;
+
+        // --- DOM 元素获取 ---
+        const mainTimeDisplay = document.getElementById('mainTimeDisplay');
+        const totalProgressBar = document.getElementById('totalProgressBar');
+
+        const stepTitle = document.getElementById('stepTitle');
+        const stepActionText = document.getElementById('stepActionText');
+        const stepDesc = document.getElementById('stepDesc');
+        const stepTemp = document.getElementById('stepTemp');
+        const stepTimeLeft = document.getElementById('stepTimeLeft');
+        const stepProgressBar = document.getElementById('stepProgressBar');
+
+        const timelineContainer = document.getElementById('timelineContainer');
+
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const playPauseText = document.getElementById('playPauseText');
+
+        const finishModal = document.getElementById('finishModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalContent = finishModal.querySelector('.modal-enter');
+
+        // --- 辅助函数 ---
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function getCurrentStep() {
+            const index = steps.findIndex(s => time >= s.start && time < s.end);
+            return index !== -1 ? steps[index] : steps[steps.length - 1];
+        }
+
+        // --- UI 更新函数 ---
+        function initTimeline() {
+            timelineContainer.innerHTML = steps.map((step, index) => `
+                <div id="timeline-step-${step.id}" class="relative pl-6 transition-opacity duration-300">
+                    <div id="timeline-dot-${step.id}" class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 bg-white border-[#E8E0D5] transition-all duration-300"></div>
+                    <div class="flex justify-between items-baseline mb-0.5">
+                        <h5 id="timeline-title-${step.id}" class="font-bold text-base text-[#4A3B32] transition-colors">
+                            ${step.title}
+                        </h5>
+                        <span class="font-mono text-xs text-[#8C7A6B]">
+                            ${formatTime(step.start)} - ${formatTime(step.end)}
+                        </span>
+                    </div>
+                    <p class="text-[#8C7A6B] text-xs">${step.desc.substring(0, 20)}...</p>
+                </div>
+            `).join('');
+        }
+
+        function updateUI() {
+            // 1. 更新主时间
+            mainTimeDisplay.textContent = formatTime(time);
+            totalProgressBar.style.width = `${(time / TOTAL_TIME) * 100}%`;
+
+            // 2. 更新当前步骤卡片
+            const currentStep = getCurrentStep();
+            if (stepTitle.textContent !== currentStep.title) {
+                stepTitle.textContent = currentStep.title;
+                stepActionText.textContent = currentStep.action;
+                stepDesc.textContent = currentStep.desc;
+                stepTemp.textContent = currentStep.temp;
+            }
+
+            // 计算当前步骤倒计时和进度条
+            const stepRemaining = currentStep.end - time;
+            stepTimeLeft.textContent = formatTime(stepRemaining > 0 ? stepRemaining : 0);
+
+            const stepDuration = currentStep.end - currentStep.start;
+            const stepElapsed = time - currentStep.start;
+            const progressPercent = Math.min(100, Math.max(0, (stepElapsed / stepDuration) * 100));
+            stepProgressBar.style.width = `${progressPercent}%`;
+
+            // 3. 更新时间线状态
+            steps.forEach(step => {
+                const el = document.getElementById(`timeline-step-${step.id}`);
+                const dot = document.getElementById(`timeline-dot-${step.id}`);
+                const title = document.getElementById(`timeline-title-${step.id}`);
+
+                const isPast = time >= step.end;
+                const isCurrent = time >= step.start && time < step.end;
+
+                if (isPast) {
+                    el.className = "relative pl-6 transition-opacity duration-300 opacity-50";
+                    dot.className = "absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 bg-[#A39182] border-[#A39182] transition-all duration-300";
+                    title.className = "font-bold text-base text-[#4A3B32] transition-colors";
+                } else if (isCurrent) {
+                    el.className = "relative pl-6 transition-opacity duration-300 opacity-100";
+                    dot.className = "absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 bg-[#8B5A2B] border-[#8B5A2B] shadow-[0_0_0_4px_rgba(139,90,43,0.2)] transition-all duration-300";
+                    title.className = "font-bold text-base text-[#8B5A2B] transition-colors";
+                } else {
+                    el.className = "relative pl-6 transition-opacity duration-300 opacity-100";
+                    dot.className = "absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 bg-white border-[#E8E0D5] transition-all duration-300";
+                    title.className = "font-bold text-base text-[#4A3B32] transition-colors";
+                }
+            });
+
+            // 4. 更新按钮状态
+            if (isRunning) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+                playPauseText.textContent = '暂停';
+                playPauseBtn.className = "flex-1 flex items-center justify-center gap-2 h-14 rounded-full font-bold text-lg text-[#3E2723] bg-[#E8E0D5] active:bg-[#D4C4B7] active:scale-95 transition-all";
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                playPauseText.textContent = time === 0 ? '开始冲煮' : '继续';
+                playPauseBtn.className = "flex-1 flex items-center justify-center gap-2 h-14 rounded-full font-bold text-lg text-white bg-[#8B5A2B] active:bg-[#6F4822] active:scale-95 transition-all shadow-lg shadow-[#8B5A2B]/30";
+            }
+        }
+
+        // --- 定时器控制逻辑 ---
+        function toggleTimer() {
+            if (time >= TOTAL_TIME) return;
+
+            isRunning = !isRunning;
+            updateUI();
+
+            if (isRunning) {
+                timerInterval = setInterval(() => {
+                    time++;
+                    updateUI();
+
+                    if (time >= TOTAL_TIME) {
+                        finishBrewing();
+                    }
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+            }
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            time = 0;
+            updateUI();
+        }
+
+        function finishBrewing() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            updateUI();
+
+            // 显示模态框
+            finishModal.classList.remove('hidden');
+            // 触发动画
+            setTimeout(() => {
+                modalContent.classList.add('modal-enter-active');
+            }, 10);
+        }
+
+        function closeFinishModal() {
+            modalContent.classList.remove('modal-enter-active');
+            setTimeout(() => {
+                finishModal.classList.add('hidden');
+                resetTimer(); // 关闭后自动重置准备下一次
+            }, 300);
+        }
+
+        // --- 事件监听绑定 ---
+        playPauseBtn.addEventListener('click', toggleTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        closeModalBtn.addEventListener('click', closeFinishModal);
+
+        // 初始化
+        initTimeline();
+        updateUI();
+
+    </script>
+</body>
+
+</html>
